@@ -1,0 +1,36 @@
+name: OpenMontage environment smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-environment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout OpenMontage
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+      - name: Verify tools and project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version
+          node --version
+          npm --version
+          ffmpeg -version | head -n 1
+          test -f requirements.txt
+          test -f remotion-composer/package.json
+          echo "OpenMontage prerequisites are available."
