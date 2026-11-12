@@ -2,6 +2,10 @@ name: OpenMontage environment smoke test
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-openmontage-smoke.yml'
 
 permissions:
   contents: read
