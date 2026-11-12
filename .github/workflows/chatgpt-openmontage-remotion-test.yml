@@ -1,0 +1,50 @@
+name: OpenMontage Remotion render test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-openmontage-remotion-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-remotion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+          cache-dependency-path: remotion-composer/package-lock.json
+      - name: Install media and browser libraries
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64 fonts-liberation
+      - name: Install locked Remotion dependencies
+        working-directory: remotion-composer
+        run: npm ci --no-audit --no-fund
+      - name: Render actual OpenMontage composition
+        working-directory: remotion-composer
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          npx remotion render src/index.tsx EndTag out/openmontage-remotion-test.mp4 --frames=0-29 --scale=0.5 --codec=h264 --concurrency=2 --log=error
+          test -s out/openmontage-remotion-test.mp4
+          ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of default=noprint_wrappers=1 out/openmontage-remotion-test.mp4
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: openmontage-remotion-test-mp4
+          path: remotion-composer/out/openmontage-remotion-test.mp4
+          if-no-files-found: error
+          retention-days: 7
