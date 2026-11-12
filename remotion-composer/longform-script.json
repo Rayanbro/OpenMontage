@@ -1,0 +1,105 @@
+{
+  "topic": "How the Internet Works",
+  "scenes": [
+    {
+      "title": "What Is the Internet?",
+      "explanation": "The internet is a worldwide network of interconnected computer networks.",
+      "takeaway": "The internet connects networks, not just devices."
+    },
+    {
+      "title": "Devices and Connections",
+      "explanation": "Phones, laptops, and servers exchange information through wired and wireless connections.",
+      "takeaway": "Every device needs a path to communicate."
+    },
+    {
+      "title": "Data Becomes Packets",
+      "explanation": "Large messages are divided into small pieces called packets before transmission.",
+      "takeaway": "Packets make communication manageable."
+    },
+    {
+      "title": "IP Addresses",
+      "explanation": "Network devices use Internet Protocol addresses to route data to destinations.",
+      "takeaway": "IP addresses help data find its destination."
+    },
+    {
+      "title": "Domain Names",
+      "explanation": "Human-friendly names are translated into network addresses using DNS.",
+      "takeaway": "DNS links names to addresses."
+    },
+    {
+      "title": "Routers and Paths",
+      "explanation": "Routers forward packets between networks, selecting suitable next hops.",
+      "takeaway": "Routers connect separate networks."
+    },
+    {
+      "title": "The Role of Servers",
+      "explanation": "Servers respond to requests and provide web pages, media, and other services.",
+      "takeaway": "Servers provide resources on demand."
+    },
+    {
+      "title": "Clients Make Requests",
+      "explanation": "A browser or app sends a request and receives a response from a service.",
+      "takeaway": "Clients request; servers respond."
+    },
+    {
+      "title": "HTTP and HTTPS",
+      "explanation": "Web applications commonly communicate using HTTP; HTTPS adds encrypted transport.",
+      "takeaway": "HTTPS protects data in transit."
+    },
+    {
+      "title": "Encryption Basics",
+      "explanation": "Encryption transforms readable information into data that requires a key to interpret.",
+      "takeaway": "Encryption helps protect privacy."
+    },
+    {
+      "title": "Wi-Fi and Mobile Networks",
+      "explanation": "Local wireless links connect devices to networks that reach the broader internet.",
+      "takeaway": "Wireless access is only one part of the route."
+    },
+    {
+      "title": "Fiber-Optic Connections",
+      "explanation": "Fiber cables carry information as light over long distances.",
+      "takeaway": "Light can transport data at high capacity."
+    },
+    {
+      "title": "Undersea Cables",
+      "explanation": "Submarine cables carry much of the world's international internet traffic.",
+      "takeaway": "Global connectivity relies on physical infrastructure."
+    },
+    {
+      "title": "Latency and Bandwidth",
+      "explanation": "Latency measures delay, while bandwidth describes potential transfer capacity.",
+      "takeaway": "Speed has more than one dimension."
+    },
+    {
+      "title": "Caching Content",
+      "explanation": "Caches store frequently requested content closer to users to reduce repeated work.",
+      "takeaway": "Caching can reduce delays."
+    },
+    {
+      "title": "Content Delivery Networks",
+      "explanation": "Distributed servers deliver content from locations closer to viewers.",
+      "takeaway": "CDNs improve delivery efficiency."
+    },
+    {
+      "title": "How Streaming Works",
+      "explanation": "Video players request compressed media in small segments as playback continues.",
+      "takeaway": "Streaming transfers media progressively."
+    },
+    {
+      "title": "Why Connections Fail",
+      "explanation": "Outages may involve local equipment, routing, servers, or service providers.",
+      "takeaway": "Troubleshooting starts by locating the fault."
+    },
+    {
+      "title": "Online Safety",
+      "explanation": "Updates, strong authentication, and careful link handling reduce common risks.",
+      "takeaway": "Safe habits matter at every layer."
+    },
+    {
+      "title": "Putting It All Together",
+      "explanation": "Your device, local network, routers, servers, and protocols cooperate on each request.",
+      "takeaway": "The internet works through many connected systems."
+    }
+  ]
+}
