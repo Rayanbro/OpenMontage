@@ -1,0 +1,85 @@
+name: OpenMontage customizable title video
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'Title displayed in the video (up to 80 characters)'
+        required: true
+        default: 'YOUR NEXT BIG IDEA'
+        type: string
+      subtitle:
+        description: 'Subtitle displayed in the video (up to 120 characters)'
+        required: false
+        default: 'Created with OpenMontage'
+        type: string
+      duration_seconds:
+        description: 'Video length (3-12 seconds)'
+        required: true
+        default: '6'
+        type: choice
+        options: ['3', '4', '5', '6', '8', '10', '12']
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+          cache-dependency-path: remotion-composer/package-lock.json
+      - name: Install rendering dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64 fonts-liberation
+      - name: Install Remotion
+        working-directory: remotion-composer
+        run: npm ci --no-audit --no-fund
+      - name: Validate inputs and create props
+        env:
+          VIDEO_TITLE: ${{ inputs.title }}
+          VIDEO_SUBTITLE: ${{ inputs.subtitle }}
+          VIDEO_SECONDS: ${{ inputs.duration_seconds }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          title = os.environ['VIDEO_TITLE'].strip()
+          subtitle = os.environ['VIDEO_SUBTITLE'].strip()
+          seconds = int(os.environ['VIDEO_SECONDS'])
+          if not 1 <= len(title) <= 80 or len(subtitle) > 120 or seconds not in (3,4,5,6,8,10,12):
+              raise SystemExit('Invalid video input')
+          with open('remotion-composer/render-props.json','w',encoding='utf-8') as f:
+              json.dump({'title':title,'subtitle':subtitle},f,ensure_ascii=False)
+          PY
+      - name: Render title animation MP4
+        working-directory: remotion-composer
+        env:
+          VIDEO_SECONDS: ${{ inputs.duration_seconds }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          last_frame=$((VIDEO_SECONDS * 30 - 1))
+          npx remotion render src/index.tsx HeroTitle out/openmontage-title-video.mp4 \
+            --props=render-props.json --frames="0-${last_frame}" --scale=0.5 \
+            --codec=h264 --concurrency=2 --log=error
+          test -s out/openmontage-title-video.mp4
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 out/openmontage-title-video.mp4
+      - name: Upload video
+        uses: actions/upload-artifact@v4
+        with:
+          name: openmontage-custom-title-video
+          path: remotion-composer/out/openmontage-title-video.mp4
+          if-no-files-found: error
+          retention-days: 7
