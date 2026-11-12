@@ -1,0 +1,42 @@
+name: Documentary Pro 1080p preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/documentary-pro-preview.yml'
+      - 'remotion-composer/src/documentary-pro.tsx'
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+          cache-dependency-path: remotion-composer/package-lock.json
+      - name: Install browser dependencies and FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64 fonts-liberation
+      - name: Install dependencies
+        working-directory: remotion-composer
+        run: npm ci --no-audit --no-fund
+      - name: Render 10-second 1080p preview
+        working-directory: remotion-composer
+        run: |
+          mkdir -p out
+          npx remotion render src/documentary-pro.tsx DocumentaryPro1080 out/documentary-pro-preview.mp4 --frames=0-239 --codec=h264 --concurrency=2 --log=error
+          ffprobe -v error -show_entries stream=width,height -of csv=p=0 out/documentary-pro-preview.mp4 | grep -q '^1920,1080$'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentary-pro-1080p-preview
+          path: remotion-composer/out/documentary-pro-preview.mp4
+          retention-days: 7
+          if-no-files-found: error
