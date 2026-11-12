@@ -1,0 +1,147 @@
+{
+  "title": "THE WORLD THAT EXISTS WITHOUT US",
+  "durationSeconds": 1200,
+  "narrationStatus": "not configured",
+  "scenes": [
+    {
+      "chapter": "The Last Second",
+      "beat": "Earth is alive",
+      "caption": "Eight billion people shape the planet.",
+      "scene": "space",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "The Last Second",
+      "beat": "Humanity disappears",
+      "caption": "Machines continue, but every person is gone.",
+      "scene": "traffic",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "The First 24 Hours",
+      "beat": "Unattended systems",
+      "caption": "Vehicles, aircraft and power stations face new risks.",
+      "scene": "factory",
+      "durationFrames": 1608
+    },
+    {
+      "chapter": "The First 24 Hours",
+      "beat": "The lights go out",
+      "caption": "Blackouts spread unevenly across cities.",
+      "scene": "blackout",
+      "durationFrames": 1632
+    },
+    {
+      "chapter": "Seven Days of Silence",
+      "beat": "A week without people",
+      "caption": "Food spoils and unattended buildings begin to fail.",
+      "scene": "city",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "Seven Days of Silence",
+      "beat": "Animals search for survival",
+      "caption": "Pets struggle while wildlife explores quiet streets.",
+      "scene": "pets",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "One Year Later",
+      "beat": "Seeds reclaim the pavement",
+      "caption": "Grass and trees begin growing in neglected places.",
+      "scene": "forest",
+      "durationFrames": 1608
+    },
+    {
+      "chapter": "One Year Later",
+      "beat": "Pollution changes",
+      "caption": "Air pollutants decline, but climate effects persist.",
+      "scene": "city",
+      "durationFrames": 1632
+    },
+    {
+      "chapter": "The Nuclear Question",
+      "beat": "Automatic shutdown",
+      "caption": "Reactors may shut down, but residual heat remains.",
+      "scene": "factory",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "The Nuclear Question",
+      "beat": "Systems require cooling",
+      "caption": "Industrial hazards depend on local conditions.",
+      "scene": "factory",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "Fifty Years After Humanity",
+      "beat": "New urban ecosystems",
+      "caption": "Former farms and streets support changing wildlife.",
+      "scene": "wildlife",
+      "durationFrames": 1608
+    },
+    {
+      "chapter": "Fifty Years After Humanity",
+      "beat": "The built world decays",
+      "caption": "Moisture, corrosion and roots weaken structures.",
+      "scene": "forest",
+      "durationFrames": 1632
+    },
+    {
+      "chapter": "Five Hundred Years Later",
+      "beat": "Cities become ruins",
+      "caption": "Erosion and vegetation transform abandoned settlements.",
+      "scene": "future",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "Five Hundred Years Later",
+      "beat": "Traces remain",
+      "caption": "Stone, concrete and foundations outlast many buildings.",
+      "scene": "forest",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "Ten Thousand Years",
+      "beat": "A geological signature",
+      "caption": "Human-made materials leave traces in sediment.",
+      "scene": "future",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "Ten Thousand Years",
+      "beat": "A future mystery",
+      "caption": "Would later life recognize the evidence of humanity?",
+      "scene": "future",
+      "durationFrames": 1440
+    },
+    {
+      "chapter": "The Last Human Object",
+      "beat": "Footprints beyond Earth",
+      "caption": "Objects on the Moon survive in a harsh environment.",
+      "scene": "space",
+      "durationFrames": 1248
+    },
+    {
+      "chapter": "The Last Human Object",
+      "beat": "A message among stars",
+      "caption": "Voyager carries records of our civilization.",
+      "scene": "space",
+      "durationFrames": 1272
+    },
+    {
+      "chapter": "The Planet Never Needed Us",
+      "beat": "Earth continues",
+      "caption": "Life adapts as the world keeps changing.",
+      "scene": "sunrise",
+      "durationFrames": 1080
+    },
+    {
+      "chapter": "The Planet Never Needed Us",
+      "beat": "What will remain?",
+      "caption": "Our choices today shape the future we leave behind.",
+      "scene": "people",
+      "durationFrames": 1080
+    }
+  ]
+}
