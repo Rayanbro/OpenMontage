@@ -1,0 +1,47 @@
+name: OpenMontage MP4 render smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-openmontage-render-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-mp4:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install FFmpeg
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Render deterministic sample MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          ffmpeg -hide_banner -nostdin -loglevel error -y \
+            -f lavfi -i "testsrc2=size=720x1280:rate=25" \
+            -f lavfi -i "sine=frequency=440:sample_rate=44100" \
+            -t 5 -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p \
+            -c:a aac -b:a 96k -shortest -movflags +faststart \
+            output/openmontage-render-test.mp4
+          test -s output/openmontage-render-test.mp4
+          ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of default=noprint_wrappers=1 output/openmontage-render-test.mp4
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 output/openmontage-render-test.mp4
+      - name: Upload sample MP4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openmontage-render-smoke-mp4
+          path: output/openmontage-render-test.mp4
+          if-no-files-found: error
+          retention-days: 7
