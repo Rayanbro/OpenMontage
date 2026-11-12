@@ -1,0 +1,126 @@
+name: OpenMontage 20-minute 2D explainer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-openmontage-longform.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate the 20-minute storyboard
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('remotion-composer/longform-script.json').read_text())
+          assert isinstance(data['topic'],str) and 1 <= len(data['topic']) <= 100
+          assert len(data['scenes']) == 20, 'Exactly 20 one-minute scenes required'
+          for i, scene in enumerate(data['scenes']):
+              for key,limit in [('title',70),('explanation',190),('takeaway',110)]:
+                  value=scene.get(key)
+                  assert isinstance(value,str) and 1 <= len(value.strip()) <= limit, f'Scene {i+1}: invalid {key}'
+          print('Validated 20 scenes x 60 seconds = 1200 seconds.')
+          PY
+
+  render:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+          cache-dependency-path: remotion-composer/package-lock.json
+      - name: Install rendering libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64 fonts-liberation
+      - name: Install locked dependencies
+        working-directory: remotion-composer
+        run: npm ci --no-audit --no-fund
+      - name: Render five 60-second chapters
+        working-directory: remotion-composer
+        env:
+          SHARD: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import json,os,pathlib
+          data=json.loads(pathlib.Path('longform-script.json').read_text())
+          shard=int(os.environ['SHARD'])
+          for i in range(shard*5,(shard+1)*5):
+              props={**data['scenes'][i],'index':i,'total':20,'topic':data['topic']}
+              pathlib.Path(f'props-{i:02d}.json').write_text(json.dumps(props,ensure_ascii=False))
+          PY
+          for i in $(seq $((SHARD*5)) $((SHARD*5+4))); do
+            printf -v chapter '%02d' "$i"
+            npx remotion render src/longform.tsx LongformScene "out/chapter-${chapter}.mp4" \
+              --props="props-${chapter}.json" --codec=h264 --concurrency=2 --log=error
+            test -s "out/chapter-${chapter}.mp4"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: longform-shard-${{ matrix.shard }}
+          path: remotion-composer/out/chapter-*.mp4
+          if-no-files-found: error
+          retention-days: 7
+
+  assemble:
+    needs: render
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: longform-shard-*
+          path: segments
+          merge-multiple: true
+      - name: Join chapters and verify 20 minutes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          files=sorted(Path('segments').glob('chapter-*.mp4'))
+          assert len(files)==20, f'Expected 20 chapters; found {len(files)}'
+          with open('concat.txt','w') as f:
+              for file in files:
+                  f.write(f"file '{file.resolve()}'\n")
+          PY
+          ffmpeg -hide_banner -nostdin -loglevel error -f concat -safe 0 -i concat.txt -c copy -movflags +faststart openmontage-20min-explainer.mp4
+          test -s openmontage-20min-explainer.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 openmontage-20min-explainer.mp4
+          python3 - <<'PY'
+          import json,subprocess
+          info=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','json','openmontage-20min-explainer.mp4']))
+          duration=float(info['format']['duration'])
+          assert abs(duration-1200)<2, f'Expected 1200 seconds, got {duration}'
+          print(f'Validated final MP4 duration: {duration:.2f} seconds')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openmontage-20-minute-2d-explainer-mp4
+          path: openmontage-20min-explainer.mp4
+          if-no-files-found: error
+          retention-days: 7
