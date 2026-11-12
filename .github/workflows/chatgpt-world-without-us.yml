@@ -1,0 +1,133 @@
+name: World Without Us documentary stick-figure render
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-world-without-us.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate the 20-minute storyboard
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('remotion-composer/documentary-storyboard.json').read_text())
+          scenes=data['scenes']
+          assert len(scenes)==20
+          assert sum(x['durationFrames'] for x in scenes)==1200*24
+          for x in scenes:
+              assert x['durationFrames']>0
+              for field in ('chapter','beat','caption','scene'):
+                  assert isinstance(x[field],str) and x[field].strip()
+          print('Validated supplied documentary storyboard: 20 segments, 20 minutes.')
+          PY
+
+  render:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+          cache-dependency-path: remotion-composer/package-lock.json
+      - name: Install rendering libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64 fonts-liberation
+      - name: Install locked dependencies
+        working-directory: remotion-composer
+        run: npm ci --no-audit --no-fund
+      - name: Render five 60-second chapters
+        working-directory: remotion-composer
+        env:
+          SHARD: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import json,os,pathlib
+          data=json.loads(pathlib.Path('documentary-storyboard.json').read_text())
+          shard=int(os.environ['SHARD'])
+          for i in range(shard*5,(shard+1)*5):
+              props={**data['scenes'][i],'index':i,'total':20}
+              pathlib.Path(f'props-{i:02d}.json').write_text(json.dumps(props,ensure_ascii=False))
+          PY
+          for i in $(seq $((SHARD*5)) $((SHARD*5+4))); do
+            printf -v chapter '%02d' "$i"
+            npx remotion render src/documentary-stickfigures.tsx DocumentaryStickFigure "out/chapter-${chapter}.mp4" \
+              --props="props-${chapter}.json" --codec=h264 --concurrency=2 --log=error
+            test -s "out/chapter-${chapter}.mp4"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentary-shard-${{ matrix.shard }}
+          path: remotion-composer/out/chapter-*.mp4
+          if-no-files-found: error
+          retention-days: 7
+
+  assemble:
+    needs: render
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Install FFmpeg for assembly
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: documentary-shard-*
+          path: segments
+          merge-multiple: true
+      - name: Join chapters and verify 20 minutes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          files=sorted(Path('segments').glob('chapter-*.mp4'))
+          assert len(files)==20, f'Expected 20 chapters; found {len(files)}'
+          with open('concat.txt','w') as f:
+              for file in files:
+                  f.write(f"file '{file.resolve()}'\n")
+          PY
+          ffmpeg -hide_banner -nostdin -loglevel error -f concat -safe 0 -i concat.txt -c copy -movflags +faststart world-without-us-documentary.mp4
+          test -s world-without-us-documentary.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 world-without-us-documentary.mp4
+          python3 - <<'PY'
+          import json,subprocess
+          info=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','json','world-without-us-documentary.mp4']))
+          duration=float(info['format']['duration'])
+          assert abs(duration-1200)<2, f'Expected 1200 seconds, got {duration}'
+          print(f'Validated final MP4 duration: {duration:.2f} seconds')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: world-without-us-20-minute-mp4
+          path: world-without-us-documentary.mp4
+          if-no-files-found: error
+          retention-days: 7
